@@ -1,174 +1,315 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Smart Garden Remote</title>
+    <title>BK Smart Garden</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Favicon BK -->
+    <link rel="icon" href="images/favicon_32x32.png" type="images/png">
+    <!-- MQTT Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <!-- Font & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; background: #f4f6f9; padding: 20px; margin: 0; }
-        .card { background: white; max-width: 400px; margin: 20px auto; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-top: 6px solid #0056b3; }
-        h2 { margin-top: 0; color: #333; }
+        :root {
+            --primary-color: #034ea2; /* Màu xanh BK */
+            --accent-color: #00b5e2;  /* Màu xanh sáng BK */
+            --bg-color: #f0f2f5;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+
+        .main-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 420px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            padding: 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .header img {
+            width: 70px;
+            height: auto;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* CONNECTION BAR */
+        .status-bar {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        .status-connected { background: var(--success); }
+        .status-disconnected { background: var(--danger); }
+        .status-connecting { background: var(--warning); color: #333; }
+
+        /* DASHBOARD CONTENT */
+        .content { padding: 25px; }
+
+        /* SENSOR GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .sensor-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s;
+        }
+        .sensor-box:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+
+        .sensor-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sensor-val {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .unit { font-size: 0.9rem; color: #888; font-weight: 400; }
+
+        /* MODE BADGE */
+        .mode-container {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 15px;
+            border: 1px dashed #ddd;
+        }
         
-        /* Status Bar */
-        .status-bar { padding: 8px 15px; border-radius: 30px; font-weight: 700; font-size: 0.9rem; color: white; margin-bottom: 20px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s; }
-        .connected { background: #28a745; } 
-        .disconnected { background: #dc3545; }
-        .connecting { background: #ffc107; color: #333; }
+        .mode-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .mode-auto { background: linear-gradient(to right, #28a745, #218838); }
+        .mode-manual { background: linear-gradient(to right, #ffc107, #e0a800); color: #333; }
 
-        /* Grid Layout */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
-        .box { background: #f8f9fa; padding: 15px; border-radius: 12px; position: relative; }
-        .box-label { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
-        .val-container { margin-top: 5px; }
-        .val { font-size: 1.8rem; font-weight: 800; color: #0056b3; }
-        .unit { font-size: 1rem; color: #888; font-weight: normal; margin-left: 2px; }
-
-        /* Buttons */
-        .btn { width: 100%; padding: 15px; margin-top: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 1rem; text-transform: uppercase; transition: transform 0.1s, opacity 0.2s; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        /* CONTROLS */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
         .btn:active { transform: scale(0.98); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; background: #ccc !important; }
-        .btn-toggle { background: #007bff; }
-        .btn-mode { background: #6c757d; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(100%); }
 
-        /* Mode Indicator */
-        .mode-indicator { font-weight: bold; color: #333; background: #e9ecef; padding: 5px 15px; border-radius: 15px; font-size: 0.9rem; }
+        .btn-mode { background: var(--primary-color); }
+        .btn-toggle { background: #ff5722; } /* Cam đậm cho nút bơm */
 
-        /* Inputs */
-        input { width: calc(100% - 22px); padding: 12px 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; outline: none; transition: border 0.3s; }
-        input:focus { border-color: #0056b3; background: white; }
+        /* LOGIN OVERLAY */
+        #loginOverlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.3s;
+        }
+        input:focus { border-color: var(--primary-color); }
+
+        /* SPINNER */
+        .spinner {
+            width: 18px; height: 18px;
+            border: 3px solid rgba(255,255,255,0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 10px;
+            display: none;
+        }
+        .btn.loading .spinner { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Smart Garden Remote</h2>
-        <div id="connectionStatus" class="status-bar disconnected">Offline</div>
-        
-        <!-- Form đăng nhập -->
-        <div id="loginForm">
-            <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Enter HiveMQ Credentials</p>
-            <input type="text" id="mqttUser" placeholder="Username (Access Mgmt)">
+
+    <div class="main-card">
+        <!-- Login Screen -->
+        <div id="loginOverlay">
+            <img src="images/logoBK.png" alt="BK Logo" style="width: 80px; margin-bottom: 20px;">
+            <h3 style="margin-bottom: 5px; color: var(--primary-color);">IoT Authentication</h3>
+            <p style="color: #777; margin-bottom: 25px;">Enter HiveMQ Credentials</p>
+            
+            <input type="text" id="mqttUser" placeholder="Username">
             <input type="password" id="mqttPass" placeholder="Password">
-            <button class="btn btn-toggle" onclick="connectMQTT()">Connect Securely</button>
+            <button class="btn btn-mode" onclick="connectMQTT()">
+                Connect System <span id="loginSpinner" class="spinner"></span>
+            </button>
         </div>
 
-        <!-- Giao diện điều khiển -->
-        <div id="dashboardUI" style="display:none;">
+        <!-- App Header -->
+        <div class="header">
+            <img src="images/logoBK.png" alt="Logo">
+            <h1>Smart Garden</h1>
+            <p>Ho Chi Minh City University of Technology</p>
+        </div>
+
+        <!-- Connection Status -->
+        <div id="connStatus" class="status-bar status-disconnected">Offline</div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Sensor Data -->
             <div class="grid">
-                <div class="box">
-                    <div class="box-label">Temp</div>
-                    <div class="val-container"><span id="temp" class="val">--</span><span class="unit">°C</span></div>
+                <div class="sensor-box">
+                    <div class="sensor-label">Temperature</div>
+                    <div class="sensor-val"><span id="temp">--</span><span class="unit">°C</span></div>
                 </div>
-                <div class="box">
-                    <div class="box-label">Humidity</div>
-                    <div class="val-container"><span id="hum" class="val">--</span><span class="unit">%</span></div>
+                <div class="sensor-box">
+                    <div class="sensor-label">Humidity</div>
+                    <div class="sensor-val"><span id="hum">--</span><span class="unit">%</span></div>
                 </div>
-                <div class="box">
-                    <div class="box-label">Soil</div>
-                    <div class="val-container"><span id="soil" class="val">--</span><span class="unit">%</span></div>
+                <div class="sensor-box">
+                    <div class="sensor-label">Soil Moisture</div>
+                    <div class="sensor-val"><span id="soil">--</span><span class="unit">%</span></div>
                 </div>
-                <div class="box">
-                    <div class="box-label">Pump</div>
-                    <div class="val-container"><span id="relay" class="val" style="color:#dc3545">OFF</span></div>
+                <div class="sensor-box">
+                    <div class="sensor-label">Pump Status</div>
+                    <div class="sensor-val" id="relay" style="color: #dc3545;">OFF</div>
                 </div>
             </div>
 
-            <div style="margin-bottom: 20px;">
-                <span class="mode-indicator">Mode: <span id="modeVal">--</span></span>
+            <!-- Mode Indicator -->
+            <div class="mode-container">
+                <div style="font-size: 0.85rem; color: #777; margin-bottom: 8px;">CURRENT OPERATING MODE</div>
+                <span id="modeBadge" class="mode-badge mode-auto">AUTO MODE</span>
             </div>
 
-            <button id="btnMode" class="btn btn-mode" onclick="switchMode()" disabled>Switch Mode</button>
-            <button id="btnRelay" class="btn btn-toggle" onclick="toggleRelay()" disabled>Toggle Pump</button>
+            <!-- Actions -->
+            <button id="btnMode" class="btn btn-mode" onclick="switchMode()" disabled>
+                <span class="btn-text">Switch to Manual</span> <span class="spinner"></span>
+            </button>
+            
+            <button id="btnRelay" class="btn btn-toggle" onclick="toggleRelay()" disabled>
+                <span class="btn-text">Toggle Pump</span> <span class="spinner"></span>
+            </button>
         </div>
     </div>
 
 <script>
-    // --- CẤU HÌNH (Khớp với STAmode.c) ---
+    /* --- CONFIGURATION --- */
     const BROKER = "81f38e24654b4ee58fcd5ea11d164817.s1.eu.hivemq.cloud";
-    const PORT = 8884; // WSS Port
-    
-    // Đã cập nhật Topic chính xác theo ESP32
+    const PORT = 8884; 
     const TOPIC_DATA = "smartgarden/device/001/telemetry";
     const TOPIC_CMD  = "smartgarden/device/001/cmd";
-    
+
     let client;
     let currentRelay = false;
-    let currentMode = 0; 
+    let currentMode = 0; // 0: Auto, 1: Manual
+    let isProcessing = false;
 
-    function onConnect() {
-        console.log("Connected to Broker");
-        document.getElementById("connectionStatus").innerText = "Online (TLS)";
-        document.getElementById("connectionStatus").className = "status-bar connected";
-        document.getElementById("loginForm").style.display = "none";
-        document.getElementById("dashboardUI").style.display = "block";
-        
-        console.log("Subscribing to: " + TOPIC_DATA);
-        client.subscribe(TOPIC_DATA);
-    }
-
-    function onConnectionLost(responseObject) {
-        if (responseObject.errorCode !== 0) {
-            console.log("Connection Lost: " + responseObject.errorMessage);
-            document.getElementById("connectionStatus").innerText = "Disconnected";
-            document.getElementById("connectionStatus").className = "status-bar disconnected";
-        }
-    }
-
-    function onMessageArrived(message) {
-        console.log("Data received: " + message.payloadString);
-        try {
-            const data = JSON.parse(message.payloadString);
-            
-            // Cập nhật giao diện an toàn hơn
-            document.getElementById("temp").innerText = data.temp.toFixed(1);
-            document.getElementById("hum").innerText = data.hum.toFixed(1);
-            document.getElementById("soil").innerText = data.soil;
-            
-            currentRelay = (data.relay === 1);
-            const rEl = document.getElementById("relay");
-            rEl.innerText = currentRelay ? "ON" : "OFF";
-            rEl.style.color = currentRelay ? "#28a745" : "#dc3545";
-
-            currentMode = data.mode;
-            document.getElementById("modeVal").innerText = (currentMode === 1) ? "MANUAL" : "AUTO";
-            
-            // Mở khóa nút bấm
-            document.getElementById("btnRelay").disabled = (currentMode === 0);
-            document.getElementById("btnMode").disabled = false;
-            document.getElementById("btnMode").innerText = (currentMode === 0) ? "Switch to Manual" : "Switch to Auto";
-        } catch (e) { 
-            console.error("Parsing error:", e); 
-        }
-    }
-
-    function sendCommand(cmd, val) {
-        const payload = JSON.stringify({ "command": cmd, "value": val });
-        message = new Paho.MQTT.Message(payload);
-        message.destinationName = TOPIC_CMD;
-        client.send(message);
-        console.log("Sent CMD: " + payload);
-    }
-
+    /* --- MQTT LOGIC --- */
     function connectMQTT() {
         const user = document.getElementById("mqttUser").value;
         const pass = document.getElementById("mqttPass").value;
-
-        if(!user || !pass) { alert("Please enter Username and Password"); return; }
-
-        document.getElementById("connectionStatus").innerText = "Connecting...";
-        document.getElementById("connectionStatus").className = "status-bar connecting";
         
-        client = new Paho.MQTT.Client(BROKER, PORT, "web_client_" + new Date().getTime());
+        if(!user || !pass) return alert("Please enter credentials");
+
+        const btn = document.querySelector("#loginOverlay .btn");
+        btn.classList.add("loading");
+        
+        client = new Paho.MQTT.Client(BROKER, PORT, "web_bk_" + new Date().getTime());
         client.onConnectionLost = onConnectionLost;
         client.onMessageArrived = onMessageArrived;
 
         client.connect({
             onSuccess: onConnect,
-            onFailure: (e) => { 
-                console.log(e); 
-                alert("Connection Failed: " + e.errorMessage); 
-                document.getElementById("connectionStatus").innerText = "Failed";
-                document.getElementById("connectionStatus").className = "status-bar disconnected";
+            onFailure: (e) => {
+                alert("Connection Failed: " + e.errorMessage);
+                btn.classList.remove("loading");
             },
             useSSL: true,
             userName: user,
@@ -176,8 +317,110 @@
         });
     }
 
-    function toggleRelay() { if (currentMode === 0) return; sendCommand("setRelay", !currentRelay); }
-    function switchMode() { const newMode = (currentMode === 0) ? "manual" : "auto"; sendCommand("setMode", newMode); }
+    function onConnect() {
+        console.log("Connected");
+        document.getElementById("loginOverlay").style.display = "none";
+        updateStatus("Online (TLS)", "status-connected");
+        client.subscribe(TOPIC_DATA);
+    }
+
+    function onConnectionLost(res) {
+        if (res.errorCode !== 0) {
+            console.log("Lost: " + res.errorMessage);
+            updateStatus("Disconnected", "status-disconnected");
+            document.getElementById("loginOverlay").style.display = "flex";
+            document.querySelector("#loginOverlay .btn").classList.remove("loading");
+        }
+    }
+
+    function updateStatus(msg, cls) {
+        const el = document.getElementById("connStatus");
+        el.innerText = msg;
+        el.className = "status-bar " + cls;
+    }
+
+    function onMessageArrived(msg) {
+        // Received update -> Action completed -> Stop spinners
+        isProcessing = false;
+        setBtnLoading("btnMode", false);
+        setBtnLoading("btnRelay", false);
+
+        try {
+            const data = JSON.parse(msg.payloadString);
+            
+            // Update Sensors
+            if(data.temperature !== undefined) document.getElementById("temp").innerText = data.temperature.toFixed(1);
+            if(data.humidity !== undefined) document.getElementById("hum").innerText = data.humidity.toFixed(1);
+            if(data.soil_moisture !== undefined) document.getElementById("soil").innerText = data.soil_moisture;
+
+            // Update Relay
+            currentRelay = (data.relay === 1);
+            const rEl = document.getElementById("relay");
+            rEl.innerText = currentRelay ? "ON" : "OFF";
+            rEl.style.color = currentRelay ? "var(--success)" : "var(--danger)";
+
+            // Update Mode
+            currentMode = data.mode;
+            updateModeUI();
+
+        } catch(e) { console.error(e); }
+    }
+
+    function updateModeUI() {
+        const badge = document.getElementById("modeBadge");
+        const btnMode = document.getElementById("btnMode");
+        const btnRelay = document.getElementById("btnRelay");
+        const txtMode = btnMode.querySelector(".btn-text");
+
+        if (currentMode === 1) { // MANUAL
+            badge.innerText = "MANUAL CONTROL";
+            badge.className = "mode-badge mode-manual";
+            txtMode.innerText = "Switch to Automatic";
+            btnRelay.disabled = false; // Enable Pump Button
+            btnRelay.style.opacity = "1";
+        } else { // AUTO
+            badge.innerText = "AUTO MODE";
+            badge.className = "mode-badge mode-auto";
+            txtMode.innerText = "Switch to Manual";
+            btnRelay.disabled = true; // Disable Pump Button
+            btnRelay.style.opacity = "0.6";
+        }
+        btnMode.disabled = false;
+    }
+
+    function sendCommand(cmd, val) {
+        const payload = JSON.stringify({ "command": cmd, "value": val });
+        const message = new Paho.MQTT.Message(payload);
+        message.destinationName = TOPIC_CMD;
+        client.send(message);
+    }
+
+    /* --- ACTIONS --- */
+    function switchMode() {
+        if(isProcessing) return;
+        isProcessing = true;
+        setBtnLoading("btnMode", true);
+        
+        // FIX LOGIC:
+        // Nếu đang Auto (0) -> Gửi 'manual'
+        // Nếu đang Manual (1) -> Gửi 'auto'
+        const cmdVal = (currentMode === 0) ? "manual" : "auto";
+        sendCommand("setMode", cmdVal);
+    }
+
+    function toggleRelay() {
+        if(currentMode === 0 || isProcessing) return;
+        isProcessing = true;
+        setBtnLoading("btnRelay", true);
+        sendCommand("setRelay", !currentRelay);
+    }
+
+    function setBtnLoading(id, isLoading) {
+        const btn = document.getElementById(id);
+        if(isLoading) btn.classList.add("loading");
+        else btn.classList.remove("loading");
+    }
+
 </script>
 </body>
 </html>
