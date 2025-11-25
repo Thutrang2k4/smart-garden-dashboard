@@ -13,7 +13,7 @@
     
     <style>
         :root {
-            --primary-color: #034ea2;
+            --primary-color: #034ea2; /* Xanh BK */
             --accent-color: #00b5e2;
             --bg-color: #f0f2f5;
             --text-color: #333;
@@ -58,10 +58,21 @@
             padding: 25px 20px;
             text-align: center;
             color: white;
+            position: relative;
         }
         .header img { width: 80px; margin-bottom: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
         .header h1 { margin: 0; font-size: 1.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .header p { margin: 5px 0 0; font-size: 0.95rem; opacity: 0.9; }
+
+        /* Help Button (Question Mark) */
+        .btn-help {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(255,255,255,0.25); border: none; color: white;
+            width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+            font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .btn-help:hover { background: rgba(255,255,255,0.5); }
 
         /* STATUS BAR */
         .status-bar {
@@ -112,7 +123,7 @@
         .btn-toggle { background: #ff5722; }
         .btn-settings { background: #6c757d; margin-top: 10px; }
 
-        /* LOGIN OVERLAY */
+        /* LOGIN OVERLAY (Old Style Enhanced) */
         #loginOverlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.98); z-index: 100;
@@ -120,16 +131,23 @@
             padding: 40px; box-sizing: border-box;
         }
         .login-container { width: 100%; max-width: 380px; text-align: center; }
-        .login-container img { width: 110px; margin-bottom: 20px; }
-        .login-container h3 { margin: 0 0 10px 0; color: var(--primary-color); font-size: 1.8rem; font-weight: 700; }
-        .login-container p { color: #666; margin: 0 0 30px 0; font-size: 1rem; }
-        .login-input-group { position: relative; width: 100%; margin: 12px 0; }
+        
+        /* Tăng kích thước Logo */
+        .login-container img { width: 120px; margin-bottom: 25px; } 
+        
+        /* Tăng kích thước Chữ */
+        .login-container h3 { margin: 0 0 15px 0; color: var(--primary-color); font-size: 2rem; font-weight: 700; }
+        .login-container p { color: #666; margin: 0 0 35px 0; font-size: 1.1rem; }
+        
+        .login-input-group { position: relative; width: 100%; margin: 15px 0; }
         .login-input {
             width: 100%; padding: 16px 15px; padding-right: 45px;
             border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1.1rem;
             outline: none; transition: border 0.3s; box-sizing: border-box; background: #fff;
         }
         .login-input:focus { border-color: var(--primary-color); }
+        
+        /* Eye Icon */
         .toggle-password {
             position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
             cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;
@@ -137,19 +155,23 @@
         .toggle-password:hover { color: var(--primary-color); }
         .toggle-password svg { width: 22px; height: 22px; }
 
-        /* SETTINGS MODAL */
-        #settingsModal {
+        /* MODALS (Shared Style) */
+        .modal-overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 50; backdrop-filter: blur(3px);
             align-items: center; justify-content: center;
         }
-        .settings-card {
+        .modal-card {
             background: white; width: 90%; max-width: 380px; border-radius: 16px; padding: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: slideUp 0.3s ease-out;
+            max-height: 85vh; overflow-y: auto;
         }
-        .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .settings-header h3 { margin: 0; color: var(--primary-color); font-size: 1.2rem; }
-        .close-btn { font-size: 1.5rem; cursor: pointer; color: #888; font-weight: bold; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-header h3 { margin: 0; color: var(--primary-color); font-size: 1.3rem; font-weight: 700; }
+        .close-btn { font-size: 1.8rem; cursor: pointer; color: #888; font-weight: bold; line-height: 1; }
+        .close-btn:hover { color: #333; }
+
+        /* SETTINGS ITEMS */
         .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #eee; }
         .setting-row:last-child { border-bottom: none; }
         .setting-label { font-size: 0.9rem; font-weight: 600; flex: 1; cursor: pointer; }
@@ -157,6 +179,23 @@
         .setting-input, .setting-select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; }
         .setting-check { transform: scale(1.3); margin-right: 10px; cursor: pointer; }
         .disabled-row { opacity: 0.5; pointer-events: none; }
+
+        /* USER MANUAL STYLES (Like Image) */
+        .manual-item { margin-bottom: 20px; position: relative; padding-left: 35px; }
+        .manual-num { 
+            position: absolute; left: 0; top: 0;
+            /* Change background color of numbers to primary color */
+            background: var(--primary-color); color: white; width: 24px; height: 24px; 
+            border-radius: 50%; text-align: center; line-height: 24px; 
+            font-weight: bold; font-size: 0.9rem;
+        }
+        .manual-item h4 { margin: 0 0 5px 0; font-size: 1.1rem; color: #333; }
+        .manual-sub { display: flex; align-items: flex-start; margin-bottom: 8px; font-size: 0.9rem; color: #555; }
+        .manual-dot { 
+            min-width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; margin-right: 8px; 
+        }
+        .manual-desc { font-size: 0.9rem; color: #666; line-height: 1.4; margin: 0; }
+        .manual-note { font-size: 0.85rem; color: #888; font-style: italic; margin-top: 4px; }
 
         /* SPINNER */
         .spinner {
@@ -189,18 +228,70 @@
                         <svg id="eyeOpen" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                     </span>
                 </div>
-                <button class="btn btn-mode" onclick="connectMQTT()" style="margin-top: 25px; padding: 18px; font-size: 1.1rem;">
-                    Connect System <span id="loginSpinner" class="spinner"></span>
+                <button class="btn btn-mode" onclick="connectMQTT()" style="margin-top: 25px; padding: 18px; font-size: 1.2rem;">
+                    CONNECT SYSTEM <span id="loginSpinner" class="spinner"></span>
                 </button>
             </div>
         </div>
 
-        <!-- Settings Modal -->
-        <div id="settingsModal">
-            <div class="settings-card">
-                <div class="settings-header">
+        <!-- USER MANUAL MODAL -->
+        <div id="helpModal" class="modal-overlay">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <!-- Change title color to primary color -->
+                    <h3 style="color: var(--primary-color);">User Manual</h3>
+                    <span class="close-btn" onclick="toggleModal('helpModal')">&times;</span>
+                </div>
+                
+                <!-- Section 1 -->
+                <div class="manual-item">
+                    <div class="manual-num">1</div>
+                    <h4>Operating Modes</h4>
+                    <div class="manual-sub">
+                        <div class="manual-dot" style="background: #43a047;"></div>
+                        <div><b>AUTO:</b> System automatically controls pump based on sensor settings.</div>
+                    </div>
+                    <div class="manual-sub">
+                        <div class="manual-dot" style="background: #fbc02d;"></div>
+                        <div><b>MANUAL:</b> You control the pump directly using the "Toggle Pump" button.</div>
+                    </div>
+                </div>
+
+                <!-- Section 2 -->
+                <div class="manual-item">
+                    <div class="manual-num">2</div>
+                    <h4>How Auto Mode Works</h4>
+                    <p class="manual-desc">The pump will turn <b>ON</b> only if <b>ALL</b> enabled sensor conditions are met simultaneously.</p>
+                    <p class="manual-note">Example: If Temp > 30°C AND Soil < 30%.</p>
+                </div>
+
+                <!-- Section 3 -->
+                <div class="manual-item">
+                    <div class="manual-num">3</div>
+                    <h4>Settings</h4>
+                    <p class="manual-desc">Click "Auto Mode Settings" to configure thresholds. Uncheck a sensor to ignore it in Auto logic.</p>
+                </div>
+
+                <!-- Section 4 -->
+                <div class="manual-item">
+                    <div class="manual-num">4</div>
+                    <h4>Status Colors</h4>
+                    <div class="manual-sub" style="margin-bottom:2px;">
+                        <div class="manual-dot" style="background: var(--success);"></div> Connected / Pump ON
+                    </div>
+                    <div class="manual-sub">
+                        <div class="manual-dot" style="background: var(--danger);"></div> Disconnected / Pump OFF
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS MODAL -->
+        <div id="settingsModal" class="modal-overlay">
+            <div class="modal-card">
+                <div class="modal-header">
                     <h3>Auto Mode Settings</h3>
-                    <span class="close-btn" onclick="toggleSettings()">&times;</span>
+                    <span class="close-btn" onclick="toggleModal('settingsModal')">&times;</span>
                 </div>
                 <p style="font-size:0.85rem; color:#666; margin-bottom:15px; font-style:italic;">Pump runs if <b>ALL</b> checked conditions are met.</p>
                 <div id="settingsLoader" style="text-align:center; display:none;"><span class="spinner" style="display:inline-block; border-color: #666; border-top-color: transparent;"></span> Loading...</div>
@@ -241,6 +332,9 @@
 
         <!-- App Header -->
         <div class="header">
+            <!-- Help Button -->
+            <button class="btn-help" onclick="toggleModal('helpModal')" title="Help">?</button>
+            
             <img src="images/logoBK.png" alt="Logo">
             <h1>Smart Garden</h1>
             <p>Ho Chi Minh City University of Technology</p>
@@ -283,7 +377,7 @@
                 <span class="btn-text">Toggle Pump</span> <span class="spinner"></span>
             </button>
 
-            <button id="btnSettings" class="btn btn-settings" onclick="toggleSettings()" disabled>
+            <button id="btnSettings" class="btn btn-settings" onclick="toggleModal('settingsModal')" disabled>
                 <span class="btn-text">Auto Mode Settings</span>
             </button>
         </div>
@@ -295,7 +389,7 @@
     const PORT = 8884; 
     const TOPIC_DATA = "smartgarden/device/001/telemetry";
     const TOPIC_CMD  = "smartgarden/device/001/cmd";
-    const TOPIC_CONF = "smartgarden/device/001/config"; /* NEW TOPIC */
+    const TOPIC_CONF = "smartgarden/device/001/config";
 
     let client;
     let currentRelay = false;
@@ -314,8 +408,8 @@
         }
     }
 
-    function toggleSettings() {
-        const modal = document.getElementById('settingsModal');
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
         modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
     }
 
@@ -356,7 +450,6 @@
         document.getElementById("loginOverlay").style.display = "none";
         updateStatus("Connected (TLS)", "status-connected");
         client.subscribe(TOPIC_DATA);
-        /* UPDATE: Đăng ký topic config để cập nhật UI khi có thay đổi */
         client.subscribe(TOPIC_CONF);
     }
 
@@ -378,10 +471,8 @@
         setBtnLoading("btnMode", false); setBtnLoading("btnRelay", false);
 
         try {
-            const payload = msg.payloadString;
-            const data = JSON.parse(payload);
+            const data = JSON.parse(msg.payloadString);
             
-            /* Xử lý Data Telemetry */
             if (msg.destinationName.includes("telemetry")) {
                 if(data.temperature !== undefined) document.getElementById("temp").innerText = data.temperature.toFixed(1);
                 if(data.humidity !== undefined) document.getElementById("hum").innerText = data.humidity.toFixed(1);
@@ -397,16 +488,12 @@
                 
                 document.getElementById("btnSettings").disabled = false;
             }
-            /* Xử lý Config Sync (Từ Topic Config) */
             else if (msg.destinationName.includes("config")) {
-                console.log("Received Config Sync:", data);
                 updateSettingsUI(data);
             }
-
         } catch(e) { console.error(e); }
     }
     
-    /* Hàm cập nhật UI Setting từ dữ liệu MQTT */
     function updateSettingsUI(data) {
         if (data.te !== undefined) document.getElementById('en_temp').checked = (data.te === 1);
         if (data.tt !== undefined) document.getElementById('val_temp').value = data.tt;
@@ -448,7 +535,6 @@
         client.send(message);
     }
 
-    /* UPDATE: Sử dụng MQTT để gửi cấu hình (Thay vì HTTP) */
     function saveSettings() {
         const config = {
             "te": document.getElementById('en_temp').checked ? 1 : 0,
@@ -464,14 +550,11 @@
             "so": parseInt(document.getElementById('op_soil').value)
         };
         
-        // Gửi lệnh setConfig qua MQTT
         sendCommand("setConfig", config);
-        
-        toggleSettings(); 
-        alert("Configuration Sent via MQTT! Waiting for sync...");
+        toggleModal('settingsModal'); 
+        alert("Settings sent! System will sync shortly.");
     }
 
-    /* --- ACTIONS --- */
     function switchMode() {
         if(isProcessing) return;
         isProcessing = true; setBtnLoading("btnMode", true);
